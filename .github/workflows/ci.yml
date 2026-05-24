@@ -1,0 +1,57 @@
+# GitHub Actions CI/CD Pipeline
+# Week 5에서 Claude Code로 이 파일을 프로젝트에 맞게 수정합니다.
+# 기본 상태에서는 비활성화되어 있습니다.
+
+name: CI/CD Pipeline
+
+on:
+  workflow_dispatch:  # 수동 실행만 가능 (Week 5 전까지)
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ── Backend Tests ──
+  # Week 5에서 주석 해제하여 활성화
+  # test-backend:
+  #   name: Backend Tests
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Setup Node.js
+  #     uses: actions/setup-node@v4
+  #     with:
+  #       node-version: ${{ env.NODE_VERSION }}
+  #   - name: Install Test Dependencies
+  #     run: |
+  #       cd tests/backend
+  #       npm init -y
+  #       npm install jest supertest jsonwebtoken bcryptjs express
+  #   - name: Run Backend Tests
+  #     run: cd tests/backend && npx jest --config jest.config.js --ci --verbose --forceExit
+  #     env:
+  #       NODE_ENV: test
+  #       JWT_SECRET: test-secret-key-for-ci
+
+  # ── Frontend Check ──
+  # Week 5에서 주석 해제하여 활성화
+  # build-frontend:
+  #   name: Frontend Check
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Setup Node.js
+  #     uses: actions/setup-node@v4
+  #     with:
+  #       node-version: ${{ env.NODE_VERSION }}
+  #   - name: Install Frontend Dependencies
+  #     run: cd src/frontend && npm install
+  #   - name: Type Check
+  #     run: cd src/frontend && npx tsc --noEmit
+
+  # ── Placeholder (비활성 상태) ──
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Pipeline Ready
+      run: echo "CI/CD pipeline is ready. Configure in Week 5."
