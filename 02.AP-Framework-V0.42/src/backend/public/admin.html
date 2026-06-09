@@ -198,8 +198,10 @@ async function enterApp(){
   document.getElementById("login").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
   if(ME){ document.getElementById("meName").textContent=ME.name; document.getElementById("meAvatar").textContent=ME.name[0]; }
-  await loadAll();
-  nav("members");
+  // 로딩 표시 (콜드스타트 등으로 데이터 도착 전 빈 화면 방지)
+  document.getElementById("view").innerHTML='<div style="display:grid;place-items:center;height:60vh;color:var(--g500)"><div>데이터를 불러오는 중…</div></div>';
+  try{ await loadAll(); nav("members"); }
+  catch(e){ document.getElementById("view").innerHTML='<div style="display:grid;place-items:center;height:60vh;color:var(--red)"><div>데이터를 불러오지 못했습니다. <button class="btn btn-secondary btn-sm" onclick="location.reload()">새로고침</button></div></div>'; toast(e.message||"불러오기 실패","err"); }
 }
 async function loadAll(){
   [MEMBERS, MAPPINGS] = await Promise.all([
