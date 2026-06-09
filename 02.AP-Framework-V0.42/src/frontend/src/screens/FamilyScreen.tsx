@@ -226,9 +226,11 @@ export function FamilyScreen() {
   }, [isBackendFamily, emergency]);
 
   // 바로전화: 백엔드에서 실제 번호 조회 후 통화 오버레이(번호 갱신)
+  // 단, 부모 id가 백엔드 UUID일 때만 조회(Mock 시드 id면 Mock 번호 유지).
+  const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
   const callParent = async (p: ParentLite) => {
     setCallingParent(p);
-    if (isBackendFamily) {
+    if (isBackendFamily && isUuid(p.id)) {
       try {
         const { phone } = await api.parentPhone(p.id);
         setCallingParent((cur) => (cur && cur.id === p.id ? { ...cur, phone } : cur));
