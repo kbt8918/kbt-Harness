@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>안심연결 관리자</title>
+<style>
+  :root{
+    --blue:#2563eb;--blue600:#1d4ed8;--blue100:#dbeafe;--green:#16a34a;--green100:#dcfce7;
+    --amber:#d97706;--amber100:#fef3c7;--red:#dc2626;--red100:#fee2e2;
+    --g900:#111827;--g700:#374151;--g500:#6b7280;--g300:#d1d5db;--g100:#f3f4f6;--g50:#f9fafb;
+    --shadow:0 4px 16px rgba(0,0,0,.08);--shadow-sm:0 1px 3px rgba(0,0,0,.1);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Malgun Gothic",sans-serif;background:var(--g50);color:var(--g900);line-height:1.5}
+  button{font-family:inherit;cursor:pointer}
+  .hidden{display:none!important}
+  .tabular{font-variant-numeric:tabular-nums}
+
+  /* 로그인 */
+  #login{min-height:100vh;display:grid;place-items:center;padding:24px}
+  .login-card{width:380px;background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:36px 32px}
+  .brand{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px}
+  .logo{width:64px;height:64px;border-radius:18px;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:30px}
+  .brand h1{font-size:22px;margin:0}.brand p{font-size:13px;color:var(--g500);margin:2px 0 0}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--g700);margin-bottom:6px}
+  .input{width:100%;height:46px;border:1px solid var(--g300);border-radius:10px;padding:0 14px;font-size:15px;outline:none}
+  .input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue100)}
+  .btn{height:46px;border:none;border-radius:10px;font-size:15px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+  .btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue600)}
+  .btn-block{width:100%}
+  .btn-sm{height:36px;padding:0 14px;font-size:13px;border-radius:8px}
+  .btn-secondary{background:#fff;color:var(--g700);border:1px solid var(--g300)}
+  .btn-secondary:hover{background:var(--g50)}
+  .btn[disabled]{opacity:.5;cursor:default}
+  .err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px}
+  .hint{font-size:12px;color:var(--g500);text-align:center;margin-top:16px}
+
+  /* 셸 */
+  #app{display:flex;min-height:100vh}
+  .side{width:240px;background:#fff;border-right:1px solid var(--g300);display:flex;flex-direction:column;padding:20px 14px}
+  .side .logo-row{display:flex;align-items:center;gap:10px;padding:6px 8px 18px}
+  .side .logo-sm{width:36px;height:36px;border-radius:10px;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:18px}
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 14px;border:none;background:transparent;border-radius:10px;font-size:14px;font-weight:600;color:var(--g700)}
+  .nav button.on{background:var(--blue100);color:var(--blue)}
+  .nav button:hover:not(.on){background:var(--g100)}
+  .side .me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 8px;border-top:1px solid var(--g100)}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--g100);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--g700)}
+  .main{flex:1;padding:28px 32px;overflow:auto}
+  h2.title{font-size:24px;margin:0 0 18px}
+
+  .toolbar{display:flex;gap:12px;align-items:flex-end;background:#fff;border:1px solid var(--g300);border-radius:12px;padding:16px;margin-bottom:16px}
+  .card{background:#fff;border:1px solid var(--g300);border-radius:12px;overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;background:var(--g100);color:var(--g500);font-size:12px;font-weight:700;padding:11px 16px}
+  td{padding:12px 16px;font-size:14px;border-top:1px solid var(--g100)}
+  tr.sel{background:var(--blue100)}
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:9999px}
+  .b-green{background:var(--green100);color:var(--green)}.b-amber{background:var(--amber100);color:var(--amber)}
+  .b-gray{background:var(--g100);color:var(--g500)}.b-blue{background:var(--blue100);color:var(--blue)}
+  .dot{width:7px;height:7px;border-radius:50%}.d-green{background:var(--green)}.d-amber{background:var(--amber)}
+  .stats{display:flex;gap:14px;margin-bottom:18px}
+  .stat{flex:1;background:#fff;border:1px solid var(--g300);border-radius:12px;padding:16px}
+  .stat .lbl{font-size:12px;color:var(--g500);font-weight:600}
+  .stat .val{font-size:26px;font-weight:800;margin-top:6px}
+  .actionbar{position:sticky;bottom:0;display:flex;align-items:center;gap:12px;padding:14px 18px;background:#fff;border:1px solid var(--g300);border-radius:12px;box-shadow:var(--shadow);margin-top:16px}
+  .grow{flex:1}
+  .muted{color:var(--g500)}
+  /* 모달 */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:50}
+  .modal{width:520px;max-height:88vh;overflow:auto;background:#fff;border-radius:16px;box-shadow:var(--shadow)}
+  .modal h3{margin:0;font-size:18px}
+  .modal .head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--g100)}
+  .modal .body{padding:22px;display:flex;flex-direction:column;gap:14px}
+  .modal .foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px;border-top:1px solid var(--g100)}
+  textarea.input{height:auto;padding:12px;resize:vertical;min-height:90px}
+  select.input{appearance:none}
+  .check{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px}
+  .check:hover{background:var(--g50)}
+  /* 토스트 */
+  #toasts{position:fixed;top:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:80}
+  .toast{background:#1f2937;color:#fff;padding:11px 16px;border-radius:10px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow);animation:slidein .2s ease-out}
+  .toast.err{background:var(--red)}
+  @keyframes slidein{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- 로그인 -->
+<section id="login">
+  <div class="login-card">
+    <div class="brand">
+      <div class="logo">♥</div>
+      <h1>안심연결 관리자</h1>
+      <p>부모님 위치 확인 서비스 · 운영 콘솔</p>
+    </div>
+    <form id="loginForm">
+      <div class="field">
+        <label>아이디</label>
+        <input class="input" id="loginId" value="admin" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>비밀번호</label>
+        <input class="input" id="password" type="password" value="admin1234" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" id="loginBtn">로그인</button>
+      <div class="err" id="loginErr"></div>
+    </form>
+    <div class="hint">관리자 계정으로 로그인하세요 (admin / admin1234)</div>
+  </div>
+</section>
+
+<!-- 앱 셸 -->
+<section id="app" class="hidden">
+  <aside class="side">
+    <div class="logo-row"><div class="logo-sm">♥</div><div><div style="font-weight:800">안심연결</div><div style="font-size:11px;color:var(--g500)">ADMIN</div></div></div>
+    <nav class="nav">
+      <button data-nav="members" class="on">👥 회원 관리</button>
+      <button data-nav="mapping">🔗 매핑 관리</button>
+      <button data-nav="history">📋 발송 내역</button>
+    </nav>
+    <div class="me"><div class="avatar" id="meAvatar">관</div><div style="flex:1"><div style="font-size:13px;font-weight:700" id="meName">관리자</div><div style="font-size:11px;color:var(--g500)">운영자</div></div>
+      <button class="btn-secondary btn-sm" id="logoutBtn">로그아웃</button></div>
+  </aside>
+  <main class="main" id="view"></main>
+</section>
+
+<div id="toasts"></div>
+<div id="modalRoot"></div>
+
+<script>
+const API = ""; // same-origin (백엔드가 직접 서빙)
+let TOKEN = localStorage.getItem("ansim.admin.token") || "";
+let ME = null;
+let MEMBERS = [];      // {id,name,role,phone,mappedParents,mappedFamilies}
+let MAPPINGS = [];     // {id,parentId,familyId}
+let DISPATCHES = [];   // 발송내역
+const sel = new Set(); // 선택된 회원 id
+
+// ── API ──
+async function call(path, opts={}){
+  const headers = Object.assign({"Content-Type":"application/json"}, opts.headers||{});
+  if(TOKEN && opts.auth!==false) headers.Authorization = "Bearer "+TOKEN;
+  const res = await fetch(API+path, Object.assign({}, opts, {headers}));
+  let body=null; try{ body=await res.json(); }catch{}
+  if(!res.ok || !body || body.status==="error"){
+    const e = body&&body.error ? body.error : {code:"ERR",message:"요청 실패 ("+res.status+")"};
+    throw Object.assign(new Error(e.message),{code:e.code,status:res.status});
+  }
+  return body.data;
+}
+const apiLogin=(loginId,password)=>call("/api/auth/login",{method:"POST",auth:false,body:JSON.stringify({loginId,password})});
+const apiMembers=(q)=>call("/api/admin/members"+(q?("?q="+encodeURIComponent(q)):""));
+const apiMappings=()=>call("/api/mapping");
+const apiCreateMapping=(parentId,familyId)=>call("/api/mapping",{method:"POST",body:JSON.stringify({parentId,familyId})});
+const apiDeleteMapping=(id)=>call("/api/mapping/"+id,{method:"DELETE"});
+const apiSms=(recipientIds,message)=>call("/api/admin/sms",{method:"POST",body:JSON.stringify({recipientIds,message})});
+const apiKakao=(recipientIds,templateCode)=>call("/api/admin/kakao",{method:"POST",body:JSON.stringify({recipientIds,templateCode})});
+const apiDispatches=(ch)=>call("/api/admin/dispatches"+(ch?("?channel="+ch):""));
+
+// ── 토스트 ──
+function toast(msg,kind){
+  const el=document.createElement("div");el.className="toast"+(kind==="err"?" err":"");el.textContent=msg;
+  document.getElementById("toasts").appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+
+// ── 유틸 ──
+const esc=(s)=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const roleKo=(r)=>r==="parent"?"부모":r==="family"?"가족":"관리자";
+function memberById(id){return MEMBERS.find(m=>m.id===id);}
+function nameById(id){const m=memberById(id);return m?m.name:id.slice(0,8);}
+
+// ── 로그인 흐름 ──
+document.getElementById("loginForm").addEventListener("submit", async (e)=>{
+  e.preventDefault();
+  const btn=document.getElementById("loginBtn"), errEl=document.getElementById("loginErr");
+  errEl.textContent=""; btn.disabled=true; btn.textContent="로그인 중…";
+  try{
+    const id=document.getElementById("loginId").value.trim();
+    const pw=document.getElementById("password").value;
+    const r=await apiLogin(id,pw);
+    if(r.user.role!=="admin"){ throw new Error("관리자 계정만 접근할 수 있습니다"); }
+    TOKEN=r.token; ME=r.user; localStorage.setItem("ansim.admin.token",TOKEN);
+    await enterApp();
+  }catch(err){ errEl.textContent=err.message||"로그인 실패"; }
+  finally{ btn.disabled=false; btn.textContent="로그인"; }
+});
+document.getElementById("logoutBtn").addEventListener("click",()=>{
+  TOKEN=""; ME=null; localStorage.removeItem("ansim.admin.token");
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("login").classList.remove("hidden");
+});
+
+async function enterApp(){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  if(ME){ document.getElementById("meName").textContent=ME.name; document.getElementById("meAvatar").textContent=ME.name[0]; }
+  await loadAll();
+  nav("members");
+}
+async function loadAll(){
+  [MEMBERS, MAPPINGS] = await Promise.all([
+    apiMembers().then(d=>d.members), apiMappings().then(d=>d.mappings)
+  ]);
+}
+
+// ── 내비 ──
+document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>nav(b.dataset.nav)));
+function nav(key){
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.nav===key));
+  if(key==="members") renderMembers();
+  else if(key==="mapping") renderMapping();
+  else if(key==="history") renderHistory();
+}
+
+// ── 회원 관리 ──
+function renderMembers(){
+  const view=document.getElementById("view");
+  const active=MEMBERS.filter(m=>(m.role==="parent"?m.mappedFamilies:m.mappedParents).length>0).length;
+  view.innerHTML=`
+    <h2 class="title">회원 관리</h2>
+    <div class="toolbar">
+      <div style="flex:1;max-width:360px"><label style="font-size:13px;font-weight:600;color:var(--g700)">검색</label>
+        <input class="input" id="q" placeholder="이름 / 연락처" /></div>
+      <button class="btn btn-secondary btn-sm" id="searchBtn">검색</button>
+      <div class="grow"></div>
+      <span class="muted">전체 <b>${MEMBERS.length}</b>명 · 연결 ${active}명</span>
+    </div>
+    <div class="card"><table>
+      <thead><tr><th style="width:42px"></th><th>이름</th><th>연락처</th><th>역할</th><th>매핑</th></tr></thead>
+      <tbody id="mbody"></tbody>
+    </table></div>
+    <div class="actionbar">
+      <span>선택 <b id="selCount" style="color:var(--blue)">0</b>명</span><div class="grow"></div>
+      <button class="btn btn-secondary btn-sm" id="smsBtn" disabled>✉ SMS 발송</button>
+      <button class="btn btn-secondary btn-sm" id="kakaoBtn" disabled>💬 카카오 알림톡</button>
+      <button class="btn btn-primary btn-sm" id="mapBtn" disabled>🔗 매핑 관리</button>
+    </div>`;
+  const draw=(rows)=>{
+    document.getElementById("mbody").innerHTML = rows.map(m=>{
+      const cnt=(m.role==="parent"?m.mappedFamilies:m.mappedParents).length;
+      const on=sel.has(m.id);
+      return `<tr class="${on?'sel':''}" data-id="${m.id}">
+        <td><input type="checkbox" ${on?'checked':''} data-cb="${m.id}"></td>
+        <td><b>${esc(m.name)}</b> <span class="muted" style="font-size:12px">${m.id.slice(0,8)}</span></td>
+        <td class="tabular">${esc(m.phone||'-')}</td>
+        <td><span class="badge ${m.role==='parent'?'b-amber':'b-gray'}">${roleKo(m.role)}</span></td>
+        <td>${cnt>0?cnt+'명 연결':'<span class="muted">(미매핑)</span>'}</td></tr>`;
+    }).join("") || `<tr><td colspan="5" style="text-align:center;padding:40px" class="muted">결과 없음</td></tr>`;
+    document.querySelectorAll("[data-cb]").forEach(cb=>cb.addEventListener("change",e=>{
+      const id=e.target.dataset.cb; e.target.checked?sel.add(id):sel.delete(id); syncSel();
+    }));
+  };
+  draw(MEMBERS);
+  const syncSel=()=>{
+    document.getElementById("selCount").textContent=sel.size;
+    ["smsBtn","kakaoBtn","mapBtn"].forEach(id=>document.getElementById(id).disabled=sel.size===0);
+    document.querySelectorAll("#mbody tr").forEach(tr=>tr.classList.toggle("sel",sel.has(tr.dataset.id)));
+  };
+  syncSel();
+  document.getElementById("searchBtn").addEventListener("click",async()=>{
+    const q=document.getElementById("q").value.trim();
+    try{ MEMBERS=(await apiMembers(q)).members; renderMembers(); }catch(e){ toast(e.message,"err"); }
+  });
+  document.getElementById("q").addEventListener("keydown",e=>{if(e.key==="Enter")document.getElementById("searchBtn").click();});
+  document.getElementById("smsBtn").addEventListener("click",()=>openSend("sms"));
+  document.getElementById("kakaoBtn").addEventListener("click",()=>openSend("kakao"));
+  document.getElementById("mapBtn").addEventListener("click",()=>openMapping());
+}
+
+// ── 발송 모달 ──
+function openSend(kind){
+  const isK=kind==="kakao";
+  modal(`${isK?'카카오 알림톡':'SMS'} 발송`, `
+    <div class="muted">수신 대상: <b>선택 ${sel.size}명</b></div>
+    <div class="field"><label>메시지 내용</label>
+      <textarea class="input" id="msg" placeholder="발송할 메시지를 입력하세요">${isK?'위치 확인 안내':'[안심연결] 부모님 위치 확인 서비스입니다.'}</textarea></div>
+  `, async (close)=>{
+    const msg=document.getElementById("msg").value.trim();
+    if(!msg){ toast("메시지를 입력하세요","err"); return; }
+    try{
+      const ids=[...sel];
+      const r = isK ? await apiKakao(ids,msg) : await apiSms(ids,msg);
+      toast(`발송 완료 — 성공 ${r.sent}건 / 실패 ${r.failed}건`);
+      sel.clear(); close(); renderMembers();
+    }catch(e){ toast(e.message,"err"); }
+  }, "발송");
+}
+
+// ── 매핑 모달 (선택 회원 자동 채움) ──
+function openMapping(preParent, preFamily){
+  const parents=MEMBERS.filter(m=>m.role==="parent");
+  const families=MEMBERS.filter(m=>m.role==="family");
+  const selParent = preParent || [...sel].map(memberById).find(m=>m&&m.role==="parent")?.id || parents[0]?.id || "";
+  const preF = preFamily || [...sel].map(memberById).find(m=>m&&m.role==="family")?.id;
+  const isMapped=(pid,fid)=>MAPPINGS.some(m=>m.parentId===pid&&m.familyId===fid);
+  modal("매핑 관리", `
+    <div class="field"><label>부모님 (위치 제공자)</label>
+      <select class="input" id="mParent">${parents.map(p=>`<option value="${p.id}" ${p.id===selParent?'selected':''}>${esc(p.name)} · ${esc(p.phone||'')}</option>`).join("")}</select></div>
+    <div><label style="font-size:13px;font-weight:600;color:var(--g700)">연결할 가족 (여러 명 가능)</label>
+      <div class="card" style="max-height:200px;overflow:auto;padding:6px;margin-top:6px" id="famList"></div></div>
+    <div style="font-size:12px;color:var(--green);font-weight:700">✓ 한 부모님 ↔ 여러 가족 제한 없음</div>
+  `, async (close)=>{
+    const pid=document.getElementById("mParent").value;
+    const checks=[...document.querySelectorAll("[data-fam]:checked")].map(c=>c.dataset.fam).filter(fid=>!isMapped(pid,fid));
+    if(checks.length===0){ toast("연결할 가족을 선택하세요","err"); return; }
+    try{
+      for(const fid of checks){ await apiCreateMapping(pid,fid); }
+      MAPPINGS=(await apiMappings()).mappings;
+      MEMBERS=(await apiMembers()).members;
+      toast(`${nameById(pid)}님을 ${checks.length}개 가족과 연결했습니다`);
+      close(); nav("mapping");
+    }catch(e){ toast(e.code==="CONFLICT"?"이미 매핑된 관계입니다":e.message,"err"); }
+  }, "연결");
+  const renderFam=()=>{
+    const pid=document.getElementById("mParent").value;
+    document.getElementById("famList").innerHTML=families.map(f=>{
+      const already=isMapped(pid,f.id), checked=already||f.id===preF;
+      return `<label class="check"><input type="checkbox" data-fam="${f.id}" ${checked?'checked':''} ${already?'disabled':''}>
+        <b>${esc(f.name)}</b> <span class="muted" style="font-size:12px">${esc(f.phone||'')}</span>
+        ${already?'<span class="badge b-gray" style="margin-left:auto">연결됨</span>':''}</label>`;
+    }).join("");
+  };
+  renderFam();
+  document.getElementById("mParent").addEventListener("change",renderFam);
+}
+
+// ── 매핑 관리 화면 ──
+function renderMapping(){
+  const view=document.getElementById("view");
+  const linkedParents=new Set(MAPPINGS.map(m=>m.parentId)).size;
+  const unmapped=MEMBERS.filter(m=>!MAPPINGS.some(mp=>mp.parentId===m.id||mp.familyId===m.id));
+  view.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 class="title">매핑 관리</h2>
+      <button class="btn btn-primary btn-sm" id="newMap">+ 새 매핑 추가</button></div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">총 매핑</div><div class="val" style="color:var(--blue)">${MAPPINGS.length}</div></div>
+      <div class="stat"><div class="lbl">연결된 부모님</div><div class="val">${linkedParents}</div></div>
+      <div class="stat"><div class="lbl">미매핑 회원</div><div class="val" style="color:var(--amber)">${unmapped.length}</div></div>
+    </div>
+    <div class="card"><table>
+      <thead><tr><th>부모님</th><th>가족</th><th>등록 ID</th><th style="text-align:right">관리</th></tr></thead>
+      <tbody>${MAPPINGS.map(m=>`<tr>
+        <td><b>${esc(nameById(m.parentId))}</b></td>
+        <td>${esc(nameById(m.familyId))}</td>
+        <td class="muted tabular" style="font-size:12px">${m.id.slice(0,12)}</td>
+        <td style="text-align:right"><button class="btn btn-secondary btn-sm" data-unmap="${m.id}" style="color:var(--red)">해제</button></td>
+      </tr>`).join("") || `<tr><td colspan="4" style="text-align:center;padding:40px" class="muted">매핑이 없습니다</td></tr>`}</tbody>
+    </table></div>`;
+  document.getElementById("newMap").addEventListener("click",()=>openMapping());
+  document.querySelectorAll("[data-unmap]").forEach(b=>b.addEventListener("click",async()=>{
+    try{ await apiDeleteMapping(b.dataset.unmap);
+      MAPPINGS=(await apiMappings()).mappings; MEMBERS=(await apiMembers()).members;
+      toast("매핑이 해제되었습니다 — 접근 권한 즉시 회수"); renderMapping();
+    }catch(e){ toast(e.message,"err"); }
+  }));
+}
+
+// ── 발송 내역 화면 ──
+async function renderHistory(ch){
+  const view=document.getElementById("view");
+  try{ DISPATCHES=(await apiDispatches(ch)).dispatches; }catch(e){ toast(e.message,"err"); DISPATCHES=[]; }
+  const total=DISPATCHES.length, ok=DISPATCHES.filter(d=>d.status==="success").length, fail=total-ok;
+  const rate=total?Math.round(ok/total*100):0;
+  view.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 class="title">발송 내역</h2>
+      <div style="display:flex;gap:6px;background:var(--g100);padding:4px;border-radius:10px">
+        ${["전체","sms","kakao"].map(c=>`<button class="btn-sm" data-ch="${c}" style="border:none;border-radius:7px;font-weight:700;background:${(!ch&&c==='전체')||ch===c?'#fff':'transparent'};color:${(!ch&&c==='전체')||ch===c?'var(--blue)':'var(--g500)'}">${c==='sms'?'SMS':c==='kakao'?'카카오':'전체'}</button>`).join("")}
+      </div></div>
+    <div class="stats">
+      <div class="stat"><div class="lbl">총 발송</div><div class="val" style="color:var(--blue)">${total}</div></div>
+      <div class="stat"><div class="lbl">성공률</div><div class="val" style="color:var(--green)">${rate}%</div></div>
+      <div class="stat"><div class="lbl">실패</div><div class="val" style="color:var(--red)">${fail}</div></div>
+    </div>
+    <div class="card"><table>
+      <thead><tr><th>발송일시</th><th>채널</th><th>대상</th><th>내용</th><th>상태</th></tr></thead>
+      <tbody>${DISPATCHES.map(d=>`<tr>
+        <td class="muted tabular" style="font-size:13px">${esc((d.created_at||'').replace('T',' ').slice(0,16))}</td>
+        <td><span class="badge ${d.channel==='kakao'?'b-amber':'b-gray'}">${d.channel==='kakao'?'알림톡':'SMS'}</span></td>
+        <td>${esc(nameById(d.recipient_id))}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.content||'')}</td>
+        <td>${d.status==='success'?'<span class="badge b-green"><span class="dot d-green"></span>완료</span>':'<span class="badge b-amber">실패</span>'}</td>
+      </tr>`).join("") || `<tr><td colspan="5" style="text-align:center;padding:40px" class="muted">발송 내역이 없습니다</td></tr>`}</tbody>
+    </table></div>`;
+  document.querySelectorAll("[data-ch]").forEach(b=>b.addEventListener("click",()=>renderHistory(b.dataset.ch==="전체"?undefined:b.dataset.ch)));
+}
+
+// ── 모달 헬퍼 ──
+function modal(title, bodyHtml, onConfirm, confirmLabel){
+  const root=document.getElementById("modalRoot");
+  root.innerHTML=`<div class="modal-bg"><div class="modal">
+    <div class="head"><h3>${esc(title)}</h3><button class="btn-secondary btn-sm" id="mClose">✕</button></div>
+    <div class="body">${bodyHtml}</div>
+    <div class="foot"><button class="btn btn-secondary btn-sm" id="mCancel">취소</button>
+      <button class="btn btn-primary btn-sm" id="mOk">${esc(confirmLabel||'확인')}</button></div>
+  </div></div>`;
+  const close=()=>{root.innerHTML="";};
+  document.getElementById("mClose").onclick=close;
+  document.getElementById("mCancel").onclick=close;
+  document.getElementById("mOk").onclick=()=>onConfirm(close);
+  root.querySelector(".modal-bg").addEventListener("click",e=>{if(e.target.classList.contains("modal-bg"))close();});
+}
+
+// ── 부팅: 토큰 있으면 자동 진입 ──
+(async()=>{
+  if(TOKEN){
+    try{ MEMBERS=(await apiMembers()).members; MAPPINGS=(await apiMappings()).mappings;
+      ME={name:"관리자",role:"admin"}; await enterApp();
+    }catch{ TOKEN=""; localStorage.removeItem("ansim.admin.token"); }
+  }
+})();
+</script>
+</body>
+</html>
