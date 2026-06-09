@@ -5,6 +5,7 @@ import { useApp, type Invite } from "@/state/AppState";
 import { Icon } from "@/components/Icon";
 import { SAFE_TOP, SAFE_BOTTOM, AuthDivider, GoogleButton, Field, GoogleAuthSheet } from "@/components/auth-ui";
 import { LoginScreen, type Role } from "./LoginScreen";
+import { googleEnabled, startGoogleLogin } from "@/lib/api";
 
 export function SignupScreen({ onLogin, onSwitch, onGoogle, invite }: {
   onLogin: (role: Role) => void;
@@ -157,12 +158,18 @@ export function AuthFlow({ onLogin }: { onLogin: (role: Role) => void }) {
     onLogin((google && google.role) || "family");
   };
 
+  // googleEnabled면 실제 Google OAuth로 이동(가입 유형 role 전달), 아니면 시뮬레이션 시트
+  const handleGoogle = (role: "parent" | "family") => {
+    if (googleEnabled) { startGoogleLogin(role); return; }
+    setGoogle({ role });
+  };
+
   return (
     <div style={{ position: "relative", height: "100%" }}>
       {mode === "login" ? (
-        <LoginScreen onLogin={onLogin} onSwitch={() => setMode("signup")} onGoogle={() => setGoogle({ role: "family" })} />
+        <LoginScreen onLogin={onLogin} onSwitch={() => setMode("signup")} onGoogle={() => handleGoogle("family")} />
       ) : (
-        <SignupScreen onLogin={onLogin} onSwitch={() => setMode("login")} onGoogle={(role) => setGoogle({ role })} />
+        <SignupScreen onLogin={onLogin} onSwitch={() => setMode("login")} onGoogle={(role) => handleGoogle(role === "admin" ? "family" : role)} />
       )}
       {google && <GoogleAuthSheet onClose={() => setGoogle(null)} onComplete={completeGoogle} />}
     </div>

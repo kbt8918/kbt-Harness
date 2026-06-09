@@ -6,6 +6,30 @@
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 export const apiEnabled = Boolean(API_BASE);
 
+// Google OAuth (CLIENT_ID는 공개 가능, SECRET은 백엔드 전용)
+export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
+export const googleEnabled = Boolean(apiEnabled && GOOGLE_CLIENT_ID);
+
+// 등록된 리디렉션 URI = {origin}/auth/callback
+export function googleRedirectUri(): string {
+  if (typeof window === "undefined") return "";
+  return window.location.origin + "/auth/callback";
+}
+
+// Google 동의 화면으로 이동. role(가입 유형)은 state로 왕복.
+export function startGoogleLogin(role?: "parent" | "family") {
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: googleRedirectUri(),
+    response_type: "code",
+    scope: "openid email profile",
+    access_type: "online",
+    prompt: "select_account",
+    state: JSON.stringify({ role: role ?? "family" }),
+  });
+  window.location.href = "https://accounts.google.com/o/oauth2/v2/auth?" + params.toString();
+}
+
 const TOKEN_KEY = "ansim.token";
 const USER_KEY = "ansim.user";
 
@@ -110,6 +134,8 @@ export interface AlertDto {
 export const api = {
   login: (loginId: string, password: string) =>
     request<AuthResult>("/api/auth/login", { method: "POST", auth: false, body: JSON.stringify({ loginId, password }) }),
+  googleExchange: (code: string, redirectUri: string, role?: "parent" | "family") =>
+    request<AuthResult & { isNew: boolean }>("/api/auth/google", { method: "POST", auth: false, body: JSON.stringify({ code, redirectUri, role }) }),
   logout: () => request<{ loggedOut: boolean }>("/api/auth/logout", { method: "POST" }),
   members: (q?: string) =>
     request<{ members: AdminMember[]; total: number }>(`/api/admin/members${q ? `?q=${encodeURIComponent(q)}` : ""}`),

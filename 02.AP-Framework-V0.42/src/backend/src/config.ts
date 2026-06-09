@@ -22,6 +22,8 @@ export const config = {
   },
   jwtSecret: process.env.JWT_SECRET ?? "ansim-connect-dev-secret",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "12h",
+  googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
   corsOrigins: (process.env.CORS_ORIGINS ?? "http://localhost:3300")
     .split(",")
     .map((s) => s.trim())

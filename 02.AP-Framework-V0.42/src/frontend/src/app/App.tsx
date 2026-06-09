@@ -1,7 +1,7 @@
 "use client";
 // App.tsx — 셸: 탭 라우팅 + 스케일 스테이지 + 실시간 연동 데모
 // 디자인 번들 app.jsx 충실 이식.
-import React, { useState, useRef, useLayoutEffect } from "react";
+import React, { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { AppProvider } from "@/state/AppState";
 import { Icon } from "@/components/Icon";
 import { AuthFlow } from "@/screens/SignupScreen";
@@ -68,6 +68,16 @@ function SceneLabel({ children, color = "var(--gray-500)" }: { children: React.R
 
 function AppShell() {
   const [tab, setTab] = useState<TabKey>("demo");
+
+  // Google 로그인 콜백 복귀 시: 역할에 맞는 화면으로 자동 분기
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const role = sessionStorage.getItem("ansim.justLoggedIn");
+    if (role) {
+      sessionStorage.removeItem("ansim.justLoggedIn");
+      setTab(role === "admin" ? "admin" : role === "parent" ? "parent" : "family");
+    }
+  }, []);
 
   const scene = () => {
     if (tab === "login") {
