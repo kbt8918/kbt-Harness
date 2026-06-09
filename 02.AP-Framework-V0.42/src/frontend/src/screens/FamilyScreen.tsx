@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { SAFE_TOP, SAFE_BOTTOM } from "@/components/auth-ui";
 import { InviteFlow } from "./InviteFlow";
 import { FamilySettings, MovementHistory, RequestList } from "./family-extra";
+import { api, apiEnabled, getAuthUser } from "@/lib/api";
 
 const clampN = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const LOC_SPOTS = [
@@ -200,6 +201,41 @@ export function FamilyScreen() {
   };
   const onSOS = () => { triggerEmergency(); pushToast("SOS 수신 — 긴급 알림이 도착했습니다"); };
 
+  // ── 백엔드 연동: 가족 로그인 시 긴급알림 폴링 + 위치 갱신시각 동기화 ──
+  const isBackendFamily = apiEnabled && getAuthUser()?.role === "family";
+  const lastAlertRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isBackendFamily) return;
+    let alive = true;
+    const poll = async () => {
+      try {
+        const { alerts } = await api.recentAlerts();
+        if (!alive || alerts.length === 0) return;
+        const latest = alerts[0];
+        if (lastAlertRef.current && lastAlertRef.current !== latest.id && !emergency) {
+          triggerEmergency();
+          pushToast("SOS 수신 — 긴급 알림이 도착했습니다");
+        }
+        lastAlertRef.current = latest.id;
+      } catch { /* 폴링 실패 무시 */ }
+    };
+    poll();
+    const iv = setInterval(poll, 8000);
+    return () => { alive = false; clearInterval(iv); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBackendFamily, emergency]);
+
+  // 바로전화: 백엔드에서 실제 번호 조회 후 통화 오버레이(번호 갱신)
+  const callParent = async (p: ParentLite) => {
+    setCallingParent(p);
+    if (isBackendFamily) {
+      try {
+        const { phone } = await api.parentPhone(p.id);
+        setCallingParent((cur) => (cur && cur.id === p.id ? { ...cur, phone } : cur));
+      } catch { /* 매핑/번호 없음 — Mock 번호 유지 */ }
+    }
+  };
+
   // ── 채팅 탭 ──
   if (tab === "chat") {
     return (
@@ -328,7 +364,7 @@ export function FamilyScreen() {
                       <span style={{ display: "flex", alignItems: "center", gap: 5, flex: 1, background: "var(--gray-50)", padding: "7px 10px", borderRadius: 9, fontSize: 12, fontWeight: 600, color: "var(--gray-700)" }}>
                         <Icon name="clock" size={15} color="var(--gray-500)" /> {relTime(pl.lastSync || now, now)} 갱신
                       </span>
-                      <button onClick={(e) => { e.stopPropagation(); setCallingParent(p); }} style={{ width: 38, height: 38, borderRadius: 10, background: "var(--secondary-500)", border: "none", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                      <button onClick={(e) => { e.stopPropagation(); callParent(p); }} style={{ width: 38, height: 38, borderRadius: 10, background: "var(--secondary-500)", border: "none", cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}>
                         <Icon name="phone" size={17} color="#fff" />
                       </button>
                     </div>

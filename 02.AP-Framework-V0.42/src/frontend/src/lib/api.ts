@@ -7,6 +7,7 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 export const apiEnabled = Boolean(API_BASE);
 
 const TOKEN_KEY = "ansim.token";
+const USER_KEY = "ansim.user";
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -16,6 +17,15 @@ export function setToken(token: string | null) {
   if (typeof window === "undefined") return;
   if (token) window.localStorage.setItem(TOKEN_KEY, token);
   else window.localStorage.removeItem(TOKEN_KEY);
+}
+export function setAuthUser(user: AuthResult["user"] | null) {
+  if (typeof window === "undefined") return;
+  if (user) window.localStorage.setItem(USER_KEY, JSON.stringify(user));
+  else window.localStorage.removeItem(USER_KEY);
+}
+export function getAuthUser(): AuthResult["user"] | null {
+  if (typeof window === "undefined") return null;
+  try { return JSON.parse(window.localStorage.getItem(USER_KEY) || "null"); } catch { return null; }
 }
 
 export class ApiError extends Error {
@@ -81,6 +91,20 @@ export interface DispatchDto {
   fail_reason: string | null;
   created_at: string;
 }
+export interface LocationDto {
+  parentId: string;
+  latitude: number;
+  longitude: number;
+  accuracy: number | null;
+  updatedAt: string;
+}
+export interface AlertDto {
+  id: string;
+  parent_id: string;
+  latitude: number | null;
+  longitude: number | null;
+  sent_at: string;
+}
 
 // ── 엔드포인트 ──
 export const api = {
@@ -99,4 +123,12 @@ export const api = {
     request<{ sent: number; failed: number }>("/api/admin/kakao", { method: "POST", body: JSON.stringify({ recipientIds, templateCode }) }),
   dispatches: (channel?: "sms" | "kakao") =>
     request<{ dispatches: DispatchDto[] }>(`/api/admin/dispatches${channel ? `?channel=${channel}` : ""}`),
+  // 부모님/가족 화면용 (위치·긴급·전화)
+  sendLocation: (latitude: number, longitude: number, accuracy?: number) =>
+    request<{ saved: boolean; broadcastTo: number }>("/api/location", { method: "POST", body: JSON.stringify({ latitude, longitude, accuracy }) }),
+  getLocation: (parentId: string) => request<LocationDto>(`/api/location/${parentId}`),
+  sendEmergency: (latitude?: number, longitude?: number) =>
+    request<{ alertId: string; notifiedFamily: number }>("/api/alert/emergency", { method: "POST", body: JSON.stringify({ latitude, longitude }) }),
+  recentAlerts: () => request<{ alerts: AlertDto[] }>("/api/alert/recent"),
+  parentPhone: (parentId: string) => request<{ parentId: string; phone: string }>(`/api/member/${parentId}/phone`),
 };

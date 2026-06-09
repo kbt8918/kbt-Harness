@@ -9,6 +9,9 @@ import { notFound, errorHandler } from "./middleware/errorHandler";
 import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
 import mappingRoutes from "./routes/mapping";
+import locationRoutes from "./routes/location";
+import alertRoutes from "./routes/alert";
+import memberRoutes from "./routes/member";
 
 // 관리자 웹 UI (public/admin.html) — 로컬(src 기준)·Vercel(dist/번들 기준) 양쪽 경로 탐색
 function loadAdminHtml(): string {
@@ -57,6 +60,9 @@ export function createApp() {
   app.use("/api/auth", authRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/mapping", mappingRoutes);
+  app.use("/api/location", locationRoutes);
+  app.use("/api/alert", alertRoutes);
+  app.use("/api/member", memberRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

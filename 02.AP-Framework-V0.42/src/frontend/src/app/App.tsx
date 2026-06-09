@@ -103,12 +103,23 @@ function AppShell() {
       );
     }
     if (tab === "admin") {
+      const ADMIN_CONSOLE = process.env.NEXT_PUBLIC_API_BASE || "https://kbt-harness-admin.vercel.app";
       return (
-        <Stage w={1240} h={860}>
+        <Stage w={1240} h={880}>
           <div>
             <SceneLabel>SCR-005 · 관리자 화면 (회원·발송)</SceneLabel>
+            {/* 정식 관리자 콘솔 안내 — 운영은 별도 admin 도메인 콘솔 사용 */}
+            <a href={ADMIN_CONSOLE} target="_blank" rel="noopener noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 12, width: 1240, margin: "0 auto 12px", padding: "12px 18px", background: "var(--primary-100)", border: "1px solid var(--primary-500)", borderRadius: 12, textDecoration: "none", color: "var(--gray-900)" }}>
+              <Icon name="shield" size={20} color="var(--primary-600)" />
+              <div style={{ flex: 1, lineHeight: 1.4 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--primary-600)" }}>정식 관리자 콘솔 바로가기</div>
+                <div style={{ fontSize: 12.5, color: "var(--gray-700)" }}>운영용 관리자 화면은 백엔드 연동 콘솔에서 실데이터로 동작합니다 · {ADMIN_CONSOLE}</div>
+              </div>
+              <Icon name="chevron-right" size={20} color="var(--primary-600)" />
+            </a>
             <div style={{ position: "relative" }}>
-              <ChromeWindow width={1240} height={800} url="admin.ansim.kr/members" tabs={[{ title: "안심연결 관리자" }]}>
+              <ChromeWindow width={1240} height={800} url="admin.ansim.kr/members" tabs={[{ title: "안심연결 관리자 (미리보기)" }]}>
                 <AdminScreen />
               </ChromeWindow>
               <ToastLayer position="pc" />

@@ -4,6 +4,22 @@ import React, { useState } from "react";
 import { useApp } from "@/state/AppState";
 import { Icon } from "@/components/Icon";
 import { SAFE_TOP, SAFE_BOTTOM } from "@/components/auth-ui";
+import { api, apiEnabled, getAuthUser } from "@/lib/api";
+
+// 백엔드 긴급알림 발송 (부모로 로그인된 경우에만). 위치는 브라우저 Geolocation, 실패 시 좌표 없이 발송.
+function backendEmergency() {
+  if (!apiEnabled) return;
+  const u = getAuthUser();
+  if (!u || u.role !== "parent") return;
+  const fire = (lat?: number, lng?: number) => { api.sendEmergency(lat, lng).catch(() => { /* Mock 흐름 유지 */ }); };
+  if (typeof navigator !== "undefined" && navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => fire(pos.coords.latitude, pos.coords.longitude),
+      () => fire(),
+      { timeout: 3000 },
+    );
+  } else { fire(); }
+}
 
 export function ParentScreen() {
   const { PARENT, sending, lastSent, triggerEmergency, incomingRequests, acceptIncoming, declineIncoming, pushToast } = useApp();
@@ -13,6 +29,7 @@ export function ParentScreen() {
   const press = () => {
     if (phase !== "idle") return; // 중복 연타 디바운스 (F-002)
     setPhase("sending");
+    backendEmergency(); // 백엔드 연동(부모 로그인 시), 데모는 Mock만
     setTimeout(() => {
       const t = triggerEmergency();
       setSentAt(t);

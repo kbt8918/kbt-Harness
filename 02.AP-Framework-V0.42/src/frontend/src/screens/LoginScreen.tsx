@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useApp } from "@/state/AppState";
 import { Icon } from "@/components/Icon";
 import { SAFE_TOP, SAFE_BOTTOM, AuthDivider, GoogleButton } from "@/components/auth-ui";
-import { api, apiEnabled, setToken, ApiError } from "@/lib/api";
+import { api, apiEnabled, setToken, setAuthUser, ApiError } from "@/lib/api";
 
 export type Role = "parent" | "family" | "admin";
 
@@ -42,6 +42,7 @@ export function LoginScreen({ onLogin, onSwitch, onGoogle }: { onLogin?: (role: 
       try {
         const res = await api.login(id, pw);
         setToken(res.token);
+        setAuthUser(res.user);
         setLoading(false);
         pushToast(DEMO_ACCOUNTS[res.user.role].label + " 계정으로 로그인되었어요");
         onLogin && onLogin(res.user.role);
